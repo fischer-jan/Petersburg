@@ -3,7 +3,8 @@ import { ReactNode } from "react";
 export interface LayoutItem {
   id: string;
   width: number;
-  height: number;
+  /** If omitted, height is auto-measured from rendered content */
+  height?: number;
   content: ReactNode;
 }
 

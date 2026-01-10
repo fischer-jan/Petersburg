@@ -8,6 +8,7 @@ Named after the Hermitage Museum in St. Petersburg, where curators arrange paint
 
 - **MaxRects bin-packing algorithm** — efficient 2D rectangle packing
 - **Multiple sort strategies** — optimize for packing efficiency or preserve input order
+- **Auto-height measurement** — items can omit height; Petersburg measures rendered content
 - **Responsive** — auto-measures container and recalculates on resize
 - **Accessible** — DOM order matches visual flow for proper tab navigation
 - **Lightweight** — no dependencies beyond React
@@ -56,7 +57,7 @@ function Gallery() {
 interface LayoutItem {
   id: string;
   width: number;
-  height: number;
+  height?: number;  // Optional — if omitted, auto-measured from content
   content: ReactNode;
 }
 
@@ -81,6 +82,27 @@ A hybrid approach for galleries where order matters at the top but efficiency ma
 - **Row 3+**: Full algorithmic freedom for optimal packing
 
 This is ideal for "newest items at top" layouts where the first row should show items 1, 2, 3... in order, but lower rows can be optimized.
+
+## Auto-Height Mode
+
+For items with dynamic content (text cards, variable-length descriptions), omit the `height` property:
+
+```tsx
+const items = [
+  { id: '1', width: 200, content: <Card title="Short" /> },
+  { id: '2', width: 200, content: <Card title="Much Longer Title Here" /> },
+  { id: '3', width: 150, content: <Card title="Medium" description="With extra text" /> },
+];
+
+<HermitageLayout items={items} gap={8} />
+```
+
+Petersburg will:
+1. Render items invisibly to measure their natural height
+2. Pack using the measured dimensions
+3. Display the final layout
+
+This adds a brief measurement phase but avoids content overflow or fixed-height constraints.
 
 ## Responsive Layouts
 

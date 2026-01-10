@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState, useEffect } from "react";
-import { HermitageLayoutProps } from "./types";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { HermitageLayoutProps, LayoutItem } from "./types";
 import { pack } from "./maxrects";
 
 export function HermitageLayout({
@@ -10,15 +10,26 @@ export function HermitageLayout({
   className,
 }: HermitageLayoutProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const [measuredWidth, setMeasuredWidth] = useState<number>(0);
+  const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(
+    new Map()
+  );
+  const [isMeasuring, setIsMeasuring] = useState(false);
 
   // Use fixed width if provided, otherwise use measured width
   const containerWidth = fixedWidth ?? measuredWidth;
 
+  // Check which items need height measurement
+  const itemsNeedingMeasure = useMemo(() => {
+    return items.filter((item) => item.height === undefined);
+  }, [items]);
+
+  const needsMeasurement = itemsNeedingMeasure.length > 0;
+
   // Measure container width using ResizeObserver
   useEffect(() => {
     if (fixedWidth !== undefined) {
-      // Fixed width provided, no need to measure
       return;
     }
 
@@ -33,26 +44,67 @@ export function HermitageLayout({
     });
 
     observer.observe(element);
-
-    // Initial measurement
     setMeasuredWidth(element.getBoundingClientRect().width);
 
     return () => observer.disconnect();
   }, [fixedWidth]);
 
+  // Measure item heights when needed
+  useEffect(() => {
+    if (!needsMeasurement || containerWidth === 0) {
+      setIsMeasuring(false);
+      return;
+    }
+
+    setIsMeasuring(true);
+
+    // Wait for next frame to ensure measurement elements are rendered
+    requestAnimationFrame(() => {
+      const measureContainer = measureRef.current;
+      if (!measureContainer) {
+        setIsMeasuring(false);
+        return;
+      }
+
+      const newHeights = new Map<string, number>();
+
+      for (const item of itemsNeedingMeasure) {
+        const element = measureContainer.querySelector(
+          `[data-measure-id="${item.id}"]`
+        );
+        if (element) {
+          newHeights.set(item.id, element.getBoundingClientRect().height);
+        }
+      }
+
+      setMeasuredHeights(newHeights);
+      setIsMeasuring(false);
+    });
+  }, [itemsNeedingMeasure, needsMeasurement, containerWidth]);
+
+  // Build items with resolved heights
+  const resolvedItems = useMemo(() => {
+    return items.map((item) => ({
+      ...item,
+      height: item.height ?? measuredHeights.get(item.id) ?? 0,
+    }));
+  }, [items, measuredHeights]);
+
+  // Check if we have all heights resolved
+  const allHeightsResolved = resolvedItems.every((item) => item.height > 0);
+
   const { placements, totalHeight } = useMemo(() => {
-    if (containerWidth === 0) {
-      // Not yet measured, return empty layout
+    if (containerWidth === 0 || !allHeightsResolved) {
       return { placements: [], totalHeight: 0 };
     }
-    return pack(items, containerWidth, gap, sortStrategy);
-  }, [items, containerWidth, gap, sortStrategy]);
+    return pack(resolvedItems, containerWidth, gap, sortStrategy);
+  }, [resolvedItems, containerWidth, gap, sortStrategy, allHeightsResolved]);
 
   // Create a map for quick lookup of placements by id
   const placementMap = useMemo(() => {
-    const map = new Map<string, { x: number; y: number }>();
+    const map = new Map<string, { x: number; y: number; height: number }>();
     for (const p of placements) {
-      map.set(p.id, { x: p.x, y: p.y });
+      map.set(p.id, { x: p.x, y: p.y, height: p.height });
     }
     return map;
   }, [placements]);
@@ -68,6 +120,9 @@ export function HermitageLayout({
     });
   }, [items, placementMap]);
 
+  // Show layout only when all measurements are complete
+  const showLayout = allHeightsResolved && containerWidth > 0;
+
   return (
     <div
       ref={containerRef}
@@ -78,25 +133,50 @@ export function HermitageLayout({
         height: totalHeight || undefined,
       }}
     >
-      {sortedItems.map((item) => {
-        const position = placementMap.get(item.id);
-        if (!position) return null;
+      {/* Hidden measurement container for items without explicit height */}
+      {needsMeasurement && containerWidth > 0 && (
+        <div
+          ref={measureRef}
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            visibility: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {itemsNeedingMeasure.map((item) => (
+            <div
+              key={item.id}
+              data-measure-id={item.id}
+              style={{ width: item.width }}
+            >
+              {item.content}
+            </div>
+          ))}
+        </div>
+      )}
 
-        return (
-          <div
-            key={item.id}
-            style={{
-              position: "absolute",
-              left: position.x,
-              top: position.y,
-              width: item.width,
-              height: item.height,
-            }}
-          >
-            {item.content}
-          </div>
-        );
-      })}
+      {/* Main layout */}
+      {showLayout &&
+        sortedItems.map((item) => {
+          const position = placementMap.get(item.id);
+          if (!position) return null;
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                position: "absolute",
+                left: position.x,
+                top: position.y,
+                width: item.width,
+                height: position.height,
+              }}
+            >
+              {item.content}
+            </div>
+          );
+        })}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 {
   "name": "petersburg",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "React layout library implementing Hermitage-style 2D bin-packing for picture arrangement",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
