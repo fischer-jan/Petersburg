@@ -259,7 +259,7 @@ function countRow1Items(
 /**
  * Find a position for an item, but only accept positions at a specific y.
  */
-function findPositionAtY(
+function _findPositionAtY(
   width: number,
   height: number,
   freeRects: Rect[],
@@ -287,7 +287,7 @@ function findPositionAtY(
 /**
  * Get the maximum height among a list of items.
  */
-function getMaxHeight(items: PackInput[]): number {
+function _getMaxHeight(items: PackInput[]): number {
   return items.reduce((max, item) => Math.max(max, item.height), 0);
 }
 

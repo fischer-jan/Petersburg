@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
-import { HermitageLayoutProps, LayoutItem } from "./types";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { HermitageLayoutProps } from "./types";
 import { pack } from "./maxrects";
 
 export function HermitageLayout({
@@ -15,8 +15,7 @@ export function HermitageLayout({
   const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(
     new Map()
   );
-  const [isMeasuring, setIsMeasuring] = useState(false);
-
+  
   // Use fixed width if provided, otherwise use measured width
   const containerWidth = fixedWidth ?? measuredWidth;
 
@@ -52,17 +51,13 @@ export function HermitageLayout({
   // Measure item heights when needed
   useEffect(() => {
     if (!needsMeasurement || containerWidth === 0) {
-      setIsMeasuring(false);
       return;
     }
-
-    setIsMeasuring(true);
 
     // Wait for next frame to ensure measurement elements are rendered
     requestAnimationFrame(() => {
       const measureContainer = measureRef.current;
       if (!measureContainer) {
-        setIsMeasuring(false);
         return;
       }
 
@@ -78,7 +73,6 @@ export function HermitageLayout({
       }
 
       setMeasuredHeights(newHeights);
-      setIsMeasuring(false);
     });
   }, [itemsNeedingMeasure, needsMeasurement, containerWidth]);
 
@@ -131,10 +125,11 @@ export function HermitageLayout({
         position: "relative",
         width: fixedWidth ?? "100%",
         height: totalHeight || undefined,
+        overflow: "hidden",
       }}
     >
       {/* Hidden measurement container for items without explicit height */}
-      {needsMeasurement && containerWidth > 0 && (
+      {needsMeasurement && containerWidth > 0 && !allHeightsResolved && (
         <div
           ref={measureRef}
           aria-hidden="true"
