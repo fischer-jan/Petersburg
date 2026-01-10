@@ -85,19 +85,41 @@ function App() {
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <h1>Petersburg Layout Demo</h1>
-      <p>Comparing sort strategies — lower total height = better packing</p>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(620px, 1fr))",
-          gap: "20px",
-        }}
-      >
-        {strategies.map((strategy) => (
-          <LayoutDemo key={strategy} strategy={strategy} containerWidth={600} />
-        ))}
-      </div>
+      {/* Responsive demo */}
+      <section style={{ marginBottom: "60px" }}>
+        <h2>Responsive Layout</h2>
+        <p>Resize the browser window to see the layout adapt.</p>
+        <div
+          style={{
+            border: "2px dashed #3498db",
+            padding: "0",
+          }}
+        >
+          <HermitageLayout items={sampleItems} gap={8} sortStrategy="ordered" />
+        </div>
+      </section>
+
+      {/* Fixed width comparison */}
+      <section>
+        <h2>Sort Strategy Comparison (fixed 600px)</h2>
+        <p>Lower total height = better packing</p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(620px, 1fr))",
+            gap: "20px",
+          }}
+        >
+          {strategies.map((strategy) => (
+            <LayoutDemo
+              key={strategy}
+              strategy={strategy}
+              containerWidth={600}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

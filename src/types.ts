@@ -14,7 +14,8 @@ export type SortStrategy =
 
 export interface HermitageLayoutProps {
   items: LayoutItem[];
-  containerWidth: number;
+  /** Fixed width. If omitted, component auto-measures its container. */
+  containerWidth?: number;
   gap?: number;
   sortStrategy?: SortStrategy;
   className?: string;
