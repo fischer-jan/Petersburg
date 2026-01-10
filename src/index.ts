@@ -1,2 +1,2 @@
 export { HermitageLayout } from "./HermitageLayout";
-export type { HermitageLayoutProps, LayoutItem } from "./types";
+export type { HermitageLayoutProps, LayoutItem, SortStrategy } from "./types";

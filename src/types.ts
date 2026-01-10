@@ -7,9 +7,37 @@ export interface LayoutItem {
   content: ReactNode;
 }
 
+export type SortStrategy =
+  | "none"        // Keep input order, pure MaxRects placement
+  | "height-desc" // Sort by height descending, often best packing
+  | "ordered";    // Row 1 strict order, Row 2 flexible, Row 3+ free
+
 export interface HermitageLayoutProps {
   items: LayoutItem[];
   containerWidth: number;
   gap?: number;
+  sortStrategy?: SortStrategy;
   className?: string;
+}
+
+// Internal types for the packing algorithm
+
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PlacedItem {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PackResult {
+  placements: PlacedItem[];
+  totalHeight: number;
 }
