@@ -57,6 +57,17 @@ export function HermitageLayout({
     return map;
   }, [placements]);
 
+  // Sort items by visual position (y, then x) for proper tab order
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const posA = placementMap.get(a.id);
+      const posB = placementMap.get(b.id);
+      if (!posA || !posB) return 0;
+      if (posA.y !== posB.y) return posA.y - posB.y;
+      return posA.x - posB.x;
+    });
+  }, [items, placementMap]);
+
   return (
     <div
       ref={containerRef}
@@ -67,7 +78,7 @@ export function HermitageLayout({
         height: totalHeight || undefined,
       }}
     >
-      {items.map((item) => {
+      {sortedItems.map((item) => {
         const position = placementMap.get(item.id);
         if (!position) return null;
 

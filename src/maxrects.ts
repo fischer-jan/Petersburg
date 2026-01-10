@@ -6,6 +6,15 @@ interface PackInput {
   height: number;
 }
 
+/**
+ * Calculate a safe maximum height for the packing area.
+ * Uses sum of all item heights as worst-case (vertical stack).
+ */
+function calcMaxHeight(items: PackInput[], gap: number): number {
+  const totalHeight = items.reduce((sum, item) => sum + item.height + gap, 0);
+  return Math.max(totalHeight, 1000); // At least 1000px
+}
+
 function sortItems(items: PackInput[], strategy: SortStrategy): PackInput[] {
   if (strategy === "none" || strategy === "ordered") {
     // "ordered" uses a different placement approach, not pre-sorting
@@ -40,9 +49,9 @@ export function pack(
   const sortedItems = sortItems(items, sortStrategy);
 
   // Start with one large free rectangle
-  // Use a very large height - we'll calculate actual height at the end
+  const maxHeight = calcMaxHeight(sortedItems, gap);
   const freeRects: Rect[] = [
-    { x: 0, y: 0, width: containerWidth, height: 100000 },
+    { x: 0, y: 0, width: containerWidth, height: maxHeight },
   ];
 
   const placements: PlacedItem[] = [];
@@ -98,8 +107,9 @@ function packOrdered(
   gap: number
 ): PackResult {
   // Start with full container as free space
+  const maxHeight = calcMaxHeight(items, gap);
   const freeRects: Rect[] = [
-    { x: 0, y: 0, width: containerWidth, height: 100000 },
+    { x: 0, y: 0, width: containerWidth, height: maxHeight },
   ];
 
   const placements: PlacedItem[] = [];
